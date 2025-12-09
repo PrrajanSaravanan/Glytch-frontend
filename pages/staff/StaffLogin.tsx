@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
@@ -6,11 +6,41 @@ import { Button } from '../../components/ui/Button';
 
 export const StaffLogin: React.FC = () => {
   const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  const handleLogin = (e: React.FormEvent) => {
+  const validateForm = (): boolean => {
+    const newErrors: { [key: string]: string } = {};
+
+    if (!email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = 'Please enter a valid email';
+    }
+
+    if (!password.trim()) {
+      newErrors.password = 'Password is required';
+    } else if (password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleLoginAsDoctor = (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate login
-    navigate('/staff/dashboard');
+    if (validateForm()) {
+      navigate('/staff/dashboard');
+    }
+  };
+
+  const handleLoginAsStaff = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (validateForm()) {
+      navigate('/staff/staff-page');
+    }
   };
 
   return (
@@ -23,31 +53,62 @@ export const StaffLogin: React.FC = () => {
       </div>
 
       <Card className="w-full max-w-sm p-8">
-        <form onSubmit={handleLogin} className="space-y-6">
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold mb-1">Welcome back</h2>
+          <p className="text-slate-500 text-sm">Please enter your credentials to access the portal.</p>
+        </div>
+        
+        <div className="space-y-4 mb-6">
           <div>
-            <h2 className="text-xl font-semibold mb-1">Welcome back</h2>
-            <p className="text-slate-500 text-sm">Please enter your credentials to access the dashboard.</p>
-          </div>
-          
-          <div className="space-y-4">
             <Input 
-              label="Email Address" 
+              label="Email Address *" 
               type="email" 
-              placeholder="staff@hospital.com"
+              placeholder="email@hospital.com"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setErrors(prev => ({ ...prev, email: '' }));
+              }}
               required
             />
+            {errors.email && (
+              <p className="text-red-600 text-xs mt-1">{errors.email}</p>
+            )}
+          </div>
+          <div>
             <Input 
-              label="Password" 
+              label="Password *" 
               type="password" 
               placeholder="••••••••"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setErrors(prev => ({ ...prev, password: '' }));
+              }}
               required
             />
+            {errors.password && (
+              <p className="text-red-600 text-xs mt-1">{errors.password}</p>
+            )}
           </div>
+        </div>
 
-          <Button type="submit" fullWidth>
-            Log In
+        <div className="space-y-3">
+          <Button 
+            onClick={handleLoginAsDoctor}
+            fullWidth
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            Login as Doctor
           </Button>
-        </form>
+          <Button 
+            onClick={handleLoginAsStaff}
+            fullWidth
+            className="bg-emerald-600 hover:bg-emerald-700"
+          >
+            Login as Staff
+          </Button>
+        </div>
       </Card>
       
       <p className="mt-6 text-sm text-slate-500">

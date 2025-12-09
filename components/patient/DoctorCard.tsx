@@ -77,10 +77,141 @@ const formatDate = (dayOfWeek: string) => {
   });
 };
 
+const formatTime12 = (timeStr: string) => {
+  if (!timeStr) return '';
+  const [hhStr, mmStr] = timeStr.split(':');
+  let hh = parseInt(hhStr, 10);
+  const mm = mmStr ? mmStr.padStart(2, '0') : '00';
+  const period = hh >= 12 ? 'PM' : 'AM';
+  hh = hh % 12 === 0 ? 12 : hh % 12;
+  return `${hh}:${mm} ${period}`;
+};
+
+// Check if shift is almost over (less than 30 mins remaining)
+const isShiftAlmostOver = (endTime: string): boolean => {
+  if (!endTime) return false;
+  const now = new Date();
+  const [hours, minutes] = endTime.split(':').map(Number);
+  const shiftEnd = new Date();
+  shiftEnd.setHours(hours, minutes, 0);
+  
+  const minutesRemaining = (shiftEnd.getTime() - now.getTime()) / (1000 * 60);
+  return minutesRemaining < 30 && minutesRemaining > 0;
+};
+
+// Booking Details Modal Component
+interface BookingDetailsModalProps {
+  doctor: Doctor;
+  onClose: () => void;
+  formatTime12: (time: string) => string;
+  formatDate: (day: string) => string;
+  selectedDay?: string;
+}
+
+const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({ doctor, onClose, formatTime12, formatDate, selectedDay = 'Monday' }) => {
+  const navigate = useNavigate();
+  const [age, setAge] = useState('');
+  const [visitReason, setVisitReason] = useState('');
+  const [errors, setErrors] = useState<{ age?: string; reason?: string }>({});
+
+  const handleSubmit = () => {
+    const newErrors: { age?: string; reason?: string } = {};
+
+    if (!age || parseInt(age) < 1 || parseInt(age) > 150) {
+      newErrors.age = 'Please enter a valid age';
+    }
+    if (!visitReason.trim()) {
+      newErrors.reason = 'Please provide a visit reason';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    const appointmentNumber = generateAppointmentNumber();
+    const shift = doctor.shifts.find(s => s.dayOfWeek === selectedDay);
+    const formattedDate = formatDate(selectedDay);
+    const time = shift ? `${formatTime12(shift.startTime)} - ${formatTime12(shift.endTime)}` : 'N/A';
+
+    navigate('/patient/appointment-confirmation', {
+      state: {
+        appointmentNumber,
+        doctorName: doctor.name,
+        specialty: doctor.specialty,
+        date: formattedDate,
+        time,
+        dayOfWeek: selectedDay,
+        age,
+        visitReason,
+      }
+    });
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <Card className="w-full max-w-md p-6 my-8">
+        <h2 className="text-xl font-bold text-slate-900 mb-4">Complete Your Booking</h2>
+        <p className="text-slate-600 text-sm mb-6">{doctor.name} - {selectedDay}</p>
+
+        <div className="space-y-4 mb-6">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Age *</label>
+            <input
+              type="number"
+              placeholder="Enter your age"
+              value={age}
+              onChange={(e) => {
+                setAge(e.target.value);
+                setErrors(prev => ({ ...prev, age: undefined }));
+              }}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {errors.age && <p className="text-red-600 text-xs mt-1">{errors.age}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Reason for Visit *</label>
+            <textarea
+              placeholder="Describe your reason for visiting the doctor"
+              value={visitReason}
+              onChange={(e) => {
+                setVisitReason(e.target.value);
+                setErrors(prev => ({ ...prev, reason: undefined }));
+              }}
+              rows={3}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            />
+            {errors.reason && <p className="text-red-600 text-xs mt-1">{errors.reason}</p>}
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-2 text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 font-medium"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+          >
+            Confirm Booking
+          </button>
+        </div>
+      </Card>
+    </div>
+  );
+};
+
 export const DoctorCard: React.FC<DoctorCardProps> = ({ doctor, onJoin }) => {
   const navigate = useNavigate();
   const [showSchedule, setShowSchedule] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [showBookingDetailsModal, setShowBookingDetailsModal] = useState(false);
+  const [selectedDay, setSelectedDay] = useState('Monday');
   const crowdInfo = getCrowdColor(doctor.crowdLevel);
   const availabilityStatus = getAvailabilityStatus(doctor.isPresent, doctor.shifts);
   const todayShift = getTodayShift(doctor.shifts);
@@ -114,12 +245,12 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({ doctor, onJoin }) => {
               </div>
               {todayShift && (
                 <span className="text-xs bg-white px-2 py-1 rounded font-medium text-slate-600">
-                  {todayShift.startTime} - {todayShift.endTime}
+                  {formatTime12(todayShift.startTime)} - {formatTime12(todayShift.endTime)}
                 </span>
               )}
             </div>
             {!todayShift && nextAvailable && (
-              <p className="text-xs text-slate-600">Next available: {nextAvailable.day} ({nextAvailable.shift.startTime} - {nextAvailable.shift.endTime})</p>
+              <p className="text-xs text-slate-600">Next available: {nextAvailable.day} ({formatTime12(nextAvailable.shift.startTime)} - {formatTime12(nextAvailable.shift.endTime)})</p>
             )}
             {!todayShift && !nextAvailable && (
               <p className="text-xs text-slate-600">Not available today</p>
@@ -144,7 +275,7 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({ doctor, onJoin }) => {
                   return (
                     <div key={day} className="flex justify-between text-xs text-slate-600">
                       <span className="font-medium">{day.slice(0, 3)}</span>
-                      <span>{shift ? `${shift.startTime} - ${shift.endTime}` : 'Off'}</span>
+                      <span>{shift ? `${formatTime12(shift.startTime)} - ${formatTime12(shift.endTime)}` : 'Off'}</span>
                     </div>
                   );
                 })}
@@ -195,17 +326,21 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({ doctor, onJoin }) => {
             } else {
               setShowBookingModal(true);
             }
-          }} 
+          }}
+          disabled={doctor.isPresent && todayShift && isShiftAlmostOver(todayShift.endTime)}
           fullWidth
+          className={doctor.isPresent && todayShift && isShiftAlmostOver(todayShift.endTime) ? 'opacity-50 cursor-not-allowed' : ''}
         >
-          {doctor.isPresent ? 'Book Appointment' : 'Book on Available Schedule'}
+          {doctor.isPresent && todayShift && isShiftAlmostOver(todayShift.endTime) 
+            ? 'Shift Ending Soon' 
+            : doctor.isPresent ? 'Book Appointment' : 'Book on Available Schedule'}
         </Button>
       </Card>
 
       {/* Booking Modal for Unavailable Doctors */}
       {showBookingModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md p-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <Card className="w-full max-w-md p-6 my-8">
             <h2 className="text-xl font-bold text-slate-900 mb-4">{doctor.name}</h2>
             <p className="text-slate-600 mb-4">Doctor is currently unavailable. Please select an available time slot:</p>
             
@@ -218,25 +353,13 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({ doctor, onJoin }) => {
                     key={day}
                     className="p-3 border border-blue-200 rounded-lg hover:bg-blue-50 cursor-pointer transition"
                     onClick={() => {
-                      const appointmentNumber = generateAppointmentNumber();
-                      const formattedDate = formatDate(day);
-                      const time = `${shift.startTime} AM`;
-                      
-                      navigate('/patient/appointment-confirmation', {
-                        state: {
-                          appointmentNumber,
-                          doctorName: doctor.name,
-                          specialty: doctor.specialty,
-                          date: formattedDate,
-                          time,
-                          dayOfWeek: day,
-                        }
-                      });
+                      setSelectedDay(day);
                       setShowBookingModal(false);
+                      setShowBookingDetailsModal(true);
                     }}
                   >
                     <p className="font-semibold text-slate-900">{day}</p>
-                    <p className="text-sm text-blue-600">{shift.startTime} - {shift.endTime}</p>
+                    <p className="text-sm text-blue-600">{formatTime12(shift.startTime)} - {formatTime12(shift.endTime)}</p>
                   </div>
                 );
               })}
@@ -250,6 +373,17 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({ doctor, onJoin }) => {
             </button>
           </Card>
         </div>
+      )}
+
+      {/* Booking Details Modal - Age and Visit Reason */}
+      {showBookingDetailsModal && (
+        <BookingDetailsModal 
+          doctor={doctor} 
+          onClose={() => setShowBookingDetailsModal(false)}
+          formatTime12={formatTime12}
+          formatDate={formatDate}
+          selectedDay={selectedDay}
+        />
       )}
     </>
   );

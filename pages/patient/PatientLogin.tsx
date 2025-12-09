@@ -152,7 +152,10 @@ export const PatientLogin: React.FC = () => {
           <div className="text-center">
             <p className="text-sm text-slate-500">
               Don't have an account?{' '}
-              <span className="text-blue-600 cursor-pointer hover:underline">
+              <span
+                className="text-blue-600 cursor-pointer hover:underline"
+                onClick={() => navigate('/patient/signup')}
+              >
                 Sign up
               </span>
             </p>

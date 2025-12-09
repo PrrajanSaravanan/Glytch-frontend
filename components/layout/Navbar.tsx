@@ -26,6 +26,19 @@ export const Navbar: React.FC = () => {
             <span className="text-sm font-medium text-slate-500 px-3 py-1 bg-slate-100 rounded-full">
               {isStaff ? 'Staff Portal' : 'Patient Portal'}
             </span>
+
+            {!isStaff && (
+              <button
+                onClick={() => {
+                  sessionStorage.removeItem('patientName');
+                  sessionStorage.removeItem('patientEmail');
+                  navigate('/');
+                }}
+                className="ml-2 text-sm px-3 py-1 bg-red-50 text-red-600 rounded-md border border-red-100 hover:bg-red-100 transition"
+              >
+                Log Out
+              </button>
+            )}
           </div>
         </div>
       </div>

@@ -11,6 +11,8 @@ interface AppointmentData {
   date: string;
   time: string;
   dayOfWeek: string;
+  age?: string;
+  visitReason?: string;
 }
 
 export const AppointmentConfirmation: React.FC = () => {
@@ -26,6 +28,8 @@ export const AppointmentConfirmation: React.FC = () => {
     date: 'Monday, December 15, 2025',
     time: '10:00 AM',
     dayOfWeek: 'Monday',
+    age: '30',
+    visitReason: 'Regular checkup',
   };
 
   const data = appointment || fallback;
@@ -69,24 +73,23 @@ export const AppointmentConfirmation: React.FC = () => {
                 <p className="text-sm font-bold text-slate-900">{data.time}</p>
               </div>
             </div>
-          </div>
-        </Card>
 
-        {/* QR Code */}
-        <Card className="w-full p-8 mb-8 flex flex-col items-center">
-          <p className="text-sm font-bold text-slate-400 uppercase tracking-wide mb-4">Appointment Code</p>
-          <div className="bg-slate-900 p-4 rounded-lg mb-4">
-            <svg width="150" height="150" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect width="100" height="100" fill="white"/>
-              <rect x="10" y="10" width="30" height="30" fill="black"/>
-              <rect x="60" y="10" width="30" height="30" fill="black"/>
-              <rect x="10" y="60" width="30" height="30" fill="black"/>
-              <rect x="50" y="50" width="10" height="10" fill="black"/>
-              <rect x="70" y="60" width="20" height="20" fill="black"/>
-              <rect x="50" y="80" width="20" height="10" fill="black"/>
-            </svg>
+            {data.age && (
+              <div className="border-t border-slate-200 pt-4 mt-4">
+                <p className="text-xs text-slate-500 uppercase font-semibold mb-2">Patient Details</p>
+                <div className="space-y-2">
+                  <div>
+                    <p className="text-xs text-slate-500">Age</p>
+                    <p className="font-semibold text-slate-900">{data.age} years</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500">Reason for Visit</p>
+                    <p className="font-semibold text-slate-900">{data.visitReason}</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-          <p className="text-xs text-slate-500 text-center">Show this code at the hospital for check-in</p>
         </Card>
 
         {/* Important Notes */}

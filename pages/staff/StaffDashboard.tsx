@@ -16,9 +16,18 @@ interface Token {
   status: TokenStatus;
 }
 
+interface UndoAction {
+  tokenNumber: number;
+  previousStatus: TokenStatus;
+  action: 'served' | 'no-show';
+  nextActiveTokenNumber?: number; // Track the next patient's token number that was called
+}
+
 export const StaffDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [holdList, setHoldList] = useState(HOLD_LIST);
+  const [isQueueFrozen, setIsQueueFrozen] = useState(false);
+  const [lastAction, setLastAction] = useState<UndoAction | null>(null);
   
   // Mock token queue data
   const [tokens, setTokens] = useState<Token[]>([
@@ -38,6 +47,16 @@ export const StaffDashboard: React.FC = () => {
 
   const handleMarkServed = () => {
     if (currentActive) {
+      // Get the next patient that will be called
+      const nextToken = getNextToken(tokens.filter(t => ['waiting', 're-enter'].includes(t.status)));
+      
+      // Store the undo action with the next patient info
+      setLastAction({
+        tokenNumber: currentActive.tokenNumber,
+        previousStatus: 'active',
+        action: 'served',
+        nextActiveTokenNumber: nextToken?.tokenNumber,
+      });
       setTokens(prev => prev.map(t =>
         t.tokenNumber === currentActive.tokenNumber ? { ...t, status: 'served' } : t
       ));
@@ -47,10 +66,56 @@ export const StaffDashboard: React.FC = () => {
 
   const handleMarkNoShow = () => {
     if (currentActive) {
+      // Get the next patient that will be called
+      const nextToken = getNextToken(tokens.filter(t => ['waiting', 're-enter'].includes(t.status)));
+      
+      // Store the undo action with the next patient info
+      setLastAction({
+        tokenNumber: currentActive.tokenNumber,
+        previousStatus: 'active',
+        action: 'no-show',
+        nextActiveTokenNumber: nextToken?.tokenNumber,
+      });
       setTokens(prev => prev.map(t =>
         t.tokenNumber === currentActive.tokenNumber ? { ...t, status: 'no-show' } : t
       ));
       callNextPatient();
+    }
+  };
+
+  const handleUndo = () => {
+    if (lastAction) {
+      setTokens(prev => {
+        let updated = [...prev];
+        
+        // Restore the original token to 'active' status
+        updated = updated.map(t =>
+          t.tokenNumber === lastAction.tokenNumber ? { ...t, status: lastAction.previousStatus } : t
+        );
+        
+        // If there was a next patient called, revert them from 'active' back to 'waiting' or 're-enter'
+        if (lastAction.nextActiveTokenNumber) {
+          updated = updated.map(t => {
+            if (t.tokenNumber === lastAction.nextActiveTokenNumber) {
+              // Find the original status of this token before it was made active
+              const nextToken = prev.find(tk => tk.tokenNumber === lastAction.nextActiveTokenNumber);
+              // The patient was either waiting or re-enter, check which one
+              return { ...t, status: t.status === 'active' ? 'waiting' : t.status };
+            }
+            return t;
+          });
+        }
+        
+        return updated;
+      });
+      
+      // Restore current active token to the original one
+      const undoToken = tokens.find(t => t.tokenNumber === lastAction.tokenNumber);
+      if (undoToken) {
+        setCurrentActive(undoToken);
+      }
+      
+      setLastAction(null);
     }
   };
 
@@ -61,6 +126,9 @@ export const StaffDashboard: React.FC = () => {
   };
 
   const callNextPatient = () => {
+    // Don't call next patient if queue is frozen
+    if (isQueueFrozen) return;
+    
     const nextToken = getNextToken(tokens.filter(t => ['waiting', 're-enter'].includes(t.status)));
     if (nextToken) {
       setTokens(prev => prev.map(t =>
@@ -82,6 +150,19 @@ export const StaffDashboard: React.FC = () => {
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
+        {/* Queue Status Banner */}
+        {isQueueFrozen && (
+          <div className="mb-8 p-4 bg-blue-100 border-l-4 border-l-blue-600 rounded-lg">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">⏸</span>
+              <div>
+                <p className="font-bold text-blue-700">Queue is Currently Frozen</p>
+                <p className="text-sm text-blue-600">New patients are not being called. Click "Resume Queue" to continue.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           {/* LEFT COLUMN: Main Queue Operations */}
@@ -111,11 +192,39 @@ export const StaffDashboard: React.FC = () => {
                     </Button>
                     <Button 
                       onClick={handleMarkNoShow}
-                      className="flex-1 py-3 text-lg border-red-500 text-red-600 hover:bg-red-50 bg-white"
+                      className="flex-1 py-3 text-lg bg-red-600 text-white hover:bg-red-700"
                     >
                       Mark No-Show
                     </Button>
+                    <button
+                      onClick={() => setIsQueueFrozen(!isQueueFrozen)}
+                      className={`flex-1 py-3 text-lg font-semibold rounded-lg transition ${
+                        isQueueFrozen 
+                          ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                          : 'bg-slate-300 text-slate-700 hover:bg-slate-400'
+                      }`}
+                    >
+                      {isQueueFrozen ? '▶ Resume Queue' : '⏸ Freeze Queue'}
+                    </button>
                   </div>
+
+                  {/* Undo Button */}
+                  {lastAction && (
+                    <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-semibold text-amber-900">Last action: {lastAction.action === 'served' ? 'Marked Served' : 'Marked No-Show'}</p>
+                          <p className="text-xs text-amber-700">Click "Undo" to revert this action</p>
+                        </div>
+                        <button
+                          onClick={handleUndo}
+                          className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-semibold transition whitespace-nowrap"
+                        >
+                          ↶ Undo
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </Card>
             )}
@@ -293,12 +402,6 @@ export const StaffDashboard: React.FC = () => {
                   </svg>
                 </Button>
                 
-                <div className="my-6 border-t border-slate-100"></div>
-                
-                <Button fullWidth variant="outline" onClick={() => navigate('/staff/update-doctors')}>
-                  Update Doctors Count
-                </Button>
-
                 <Button fullWidth variant="danger" className="mt-4" onClick={() => navigate('/')}>
                   Log Out
                 </Button>
