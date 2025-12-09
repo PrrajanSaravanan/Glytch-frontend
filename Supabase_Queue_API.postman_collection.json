@@ -1,0 +1,296 @@
+{
+  "info": {
+    "_postman_id": "supabase-queue-system",
+    "name": "Supabase Queue Management API",
+    "description": "Complete API collection for Glytch Queue Management System",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Sign Up",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{supabase_url}}/auth/v1/signup",
+              "host": ["supabase_url"],
+              "path": ["auth", "v1", "signup"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"patient@test.com\",\n  \"password\": \"password123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Sign In",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{supabase_url}}/auth/v1/token?grant_type=password",
+              "host": ["supabase_url"],
+              "path": ["auth", "v1", "token"],
+              "query": [
+                {
+                  "key": "grant_type",
+                  "value": "password"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"patient@test.com\",\n  \"password\": \"password123\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Doctors",
+      "item": [
+        {
+          "name": "List All Doctors",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{supabase_url}}/functions/v1/doctors-list",
+              "host": ["supabase_url"],
+              "path": ["functions", "v1", "doctors-list"]
+            }
+          }
+        },
+        {
+          "name": "List Doctors by Specialty",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{supabase_url}}/functions/v1/doctors-list?specialty=Cardiology&available=true",
+              "host": ["supabase_url"],
+              "path": ["functions", "v1", "doctors-list"],
+              "query": [
+                {
+                  "key": "specialty",
+                  "value": "Cardiology"
+                },
+                {
+                  "key": "available",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Set Doctor Availability",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{supabase_url}}/functions/v1/doctor-set-availability",
+              "host": ["supabase_url"],
+              "path": ["functions", "v1", "doctor-set-availability"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctor_id\": \"{{doctor_id}}\",\n  \"available\": true\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Patient Management",
+      "item": [
+        {
+          "name": "Create Patient Profile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{supabase_url}}/functions/v1/patient-create",
+              "host": ["supabase_url"],
+              "path": ["functions", "v1", "patient-create"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"healthDetails\": \"Diabetes, Hypertension\",\n  \"medicalHistory\": [\"Diabetes\", \"Hypertension\"],\n  \"allergies\": \"Penicillin\",\n  \"emergencyContact\": \"Jane Doe\",\n  \"emergencyPhone\": \"+1-234-567-8901\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Queue Management",
+      "item": [
+        {
+          "name": "Book Appointment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{supabase_url}}/functions/v1/queue-book",
+              "host": ["supabase_url"],
+              "path": ["functions", "v1", "queue-book"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctor_id\": \"{{doctor_id}}\",\n  \"health_summary\": \"General checkup needed\",\n  \"appointment_date\": \"2025-12-10\",\n  \"appointment_time\": \"10:30\",\n  \"notes\": \"First time visit\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Queue Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{supabase_url}}/functions/v1/queue-status/{{doctor_id}}",
+              "host": ["supabase_url"],
+              "path": ["functions", "v1", "queue-status", "{{doctor_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Mark Patient as Served",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{supabase_url}}/functions/v1/queue-mark-served",
+              "host": ["supabase_url"],
+              "path": ["functions", "v1", "queue-mark-served"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"queue_id\": \"{{queue_id}}\",\n  \"doctor_id\": \"{{doctor_id}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Mark Patient as No-Show",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{supabase_url}}/functions/v1/queue-mark-no-show",
+              "host": ["supabase_url"],
+              "path": ["functions", "v1", "queue-mark-no-show"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"queue_id\": \"{{queue_id}}\",\n  \"doctor_id\": \"{{doctor_id}}\",\n  \"cancellation_reason\": \"Patient did not arrive\"\n}"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "supabase_url",
+      "value": "https://your-project.supabase.co",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "doctor_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "staff_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "doctor_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "queue_id",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
+import { supabaseAuthService } from '../../src/services/supabaseAuthService';
+import { supabaseService } from '../../src/services/supabaseService';
 
 export const PatientSignup: React.FC = () => {
   const navigate = useNavigate();
@@ -14,6 +16,7 @@ export const PatientSignup: React.FC = () => {
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -53,36 +56,34 @@ export const PatientSignup: React.FC = () => {
       return;
     }
 
-    // Persist user to localStorage (simple mock)
-    try {
-      const stored = localStorage.getItem('patients');
-      const patients = stored ? JSON.parse(stored) : [];
-      
-      // Check if user already exists
-      const userExists = patients.some(
-        (p: any) => p.contact === formData.emailOrPhone.trim()
-      );
-      
-      if (userExists) {
-        setError('This email or phone is already registered');
-        return;
-      }
+    // Email signup with Supabase
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.emailOrPhone.trim())) {
+      setError('Please enter a valid email address');
+      return;
+    }
 
-      const newPatient = {
-        id: `p-${Date.now()}`,
-        name: formData.name.trim(),
-        contact: formData.emailOrPhone.trim(),
-        password: formData.password,
-      };
-      patients.push(newPatient);
-      localStorage.setItem('patients', JSON.stringify(patients));
+    signupWithSupabase();
+  };
+
+  const signupWithSupabase = async () => {
+    setLoading(true);
+    try {
+      // Create Supabase user
+      const user = await supabaseAuthService.signup(
+        formData.emailOrPhone.trim(),
+        formData.password,
+        formData.name.trim(),
+        'patient'
+      );
 
       setSuccess('Account created successfully! Redirecting to login...');
       setTimeout(() => {
         navigate('/patient/login');
       }, 1500);
     } catch (err) {
-      setError('Failed to create account. Please try again.');
+      setError((err as Error).message);
+      setLoading(false);
     }
   };
 
@@ -153,8 +154,8 @@ export const PatientSignup: React.FC = () => {
             />
           </div>
 
-          <Button type="submit" fullWidth>
-            Create Account
+          <Button type="submit" fullWidth disabled={loading}>
+            {loading ? 'Creating Account...' : 'Create Account'}
           </Button>
 
           <div className="text-center">

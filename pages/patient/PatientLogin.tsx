@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
+import { supabaseAuthService } from '../../src/services/supabaseAuthService';
 
 export const PatientLogin: React.FC = () => {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ export const PatientLogin: React.FC = () => {
     password: '',
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -55,12 +57,34 @@ export const PatientLogin: React.FC = () => {
       }
     }
 
-    // Simulate login - store patient data in session/localStorage
-    sessionStorage.setItem('patientName', formData.name);
-    sessionStorage.setItem('patientEmail', formData.emailOrPhone);
-    
-    // Navigate to doctor list
-    navigate('/patient/doctors');
+    // Supabase login
+    loginWithSupabase();
+  };
+
+  const loginWithSupabase = async () => {
+    setLoading(true);
+    try {
+      // Only email login is supported by Supabase Authentication
+      // For phone login, you would need Supabase Phone Authentication
+      if (loginMethod === 'phone') {
+        setError('Phone authentication coming soon. Please use email for now.');
+        setLoading(false);
+        return;
+      }
+
+      const user = await supabaseAuthService.login(formData.emailOrPhone, formData.password);
+      
+      // Store patient info in session
+      sessionStorage.setItem('patientName', formData.name);
+      sessionStorage.setItem('patientEmail', user.email || '');
+      sessionStorage.setItem('patientUID', user.uid);
+      
+      // Navigate to doctor list
+      navigate('/patient/doctors');
+    } catch (err) {
+      setError((err as Error).message);
+      setLoading(false);
+    }
   };
 
   return (
@@ -145,8 +169,8 @@ export const PatientLogin: React.FC = () => {
             />
           </div>
 
-          <Button type="submit" fullWidth>
-            Log In
+          <Button type="submit" fullWidth disabled={loading}>
+            {loading ? 'Logging in...' : 'Log In'}
           </Button>
 
           <div className="text-center">

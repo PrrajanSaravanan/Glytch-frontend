@@ -3,12 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
+import { supabaseAuthService } from '../../src/services/supabaseAuthService';
+import { supabaseService } from '../../src/services/supabaseService';
 
 export const StaffLogin: React.FC = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [loading, setLoading] = useState(false);
 
   const validateForm = (): boolean => {
     const newErrors: { [key: string]: string } = {};
@@ -32,14 +35,53 @@ export const StaffLogin: React.FC = () => {
   const handleLoginAsDoctor = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      navigate('/staff/dashboard');
+      loginWithSupabase('doctor');
     }
   };
 
   const handleLoginAsStaff = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      navigate('/staff/staff-page');
+      loginWithSupabase('staff');
+    }
+  };
+
+  const loginWithSupabase = async (role: 'doctor' | 'staff') => {
+    setLoading(true);
+    try {
+      // Authenticate user
+      const user = await supabaseAuthService.login(email, password);
+
+      // Query Supabase to check if user has the requested role
+      const { data: staffDocs, error: queryError } = await supabaseService.supabase
+        .from(role === 'doctor' ? 'doctors' : 'staff')
+        .select('*')
+        .eq('id', user.id);
+
+      if (queryError) throw queryError;
+
+      if (!staffDocs || staffDocs.length === 0) {
+        setErrors({ 
+          general: `You don't have access as a ${role}. Please contact administration.` 
+        });
+        await supabaseAuthService.logout();
+        setLoading(false);
+        return;
+      }
+
+      // Store staff info in session
+      sessionStorage.setItem('staffUID', user.id);
+      sessionStorage.setItem('staffEmail', user.email || '');
+      sessionStorage.setItem('staffRole', role);
+      sessionStorage.setItem('staffData', JSON.stringify(staffDocs[0]));
+
+      // Navigate based on role
+      navigate(role === 'doctor' ? '/staff/dashboard' : '/staff/staff-page');
+    } catch (err) {
+      setErrors({ 
+        general: (err as Error).message 
+      });
+      setLoading(false);
     }
   };
 
@@ -93,20 +135,28 @@ export const StaffLogin: React.FC = () => {
           </div>
         </div>
 
+        {errors.general && (
+          <div className="p-3 bg-red-50 border border-red-200 rounded-lg mb-6">
+            <p className="text-red-700 text-sm">{errors.general}</p>
+          </div>
+        )}
+
         <div className="space-y-3">
           <Button 
             onClick={handleLoginAsDoctor}
             fullWidth
+            disabled={loading}
             className="bg-blue-600 hover:bg-blue-700"
           >
-            Login as Doctor
+            {loading ? 'Logging in...' : 'Login as Doctor'}
           </Button>
           <Button 
             onClick={handleLoginAsStaff}
             fullWidth
+            disabled={loading}
             className="bg-emerald-600 hover:bg-emerald-700"
           >
-            Login as Staff
+            {loading ? 'Logging in...' : 'Login as Staff'}
           </Button>
         </div>
       </Card>
