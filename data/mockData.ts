@@ -9,6 +9,15 @@ export const DOCTORS: Doctor[] = [
     experience: '12+ years experience',
     queueLength: 8,
     estimatedWaitTime: '45 mins',
+    crowdLevel: 'high',
+    isPresent: true,
+    shifts: [
+      { dayOfWeek: 'Monday', startTime: '09:00', endTime: '17:00' },
+      { dayOfWeek: 'Tuesday', startTime: '09:00', endTime: '17:00' },
+      { dayOfWeek: 'Wednesday', startTime: '09:00', endTime: '17:00' },
+      { dayOfWeek: 'Thursday', startTime: '09:00', endTime: '17:00' },
+      { dayOfWeek: 'Friday', startTime: '09:00', endTime: '17:00' },
+    ],
   },
   {
     id: 'd2',
@@ -18,6 +27,15 @@ export const DOCTORS: Doctor[] = [
     experience: '8+ years experience',
     queueLength: 3,
     estimatedWaitTime: '15 mins',
+    crowdLevel: 'low',
+    isPresent: true,
+    shifts: [
+      { dayOfWeek: 'Monday', startTime: '10:00', endTime: '18:00' },
+      { dayOfWeek: 'Tuesday', startTime: '10:00', endTime: '18:00' },
+      { dayOfWeek: 'Thursday', startTime: '10:00', endTime: '18:00' },
+      { dayOfWeek: 'Friday', startTime: '10:00', endTime: '18:00' },
+      { dayOfWeek: 'Saturday', startTime: '09:00', endTime: '14:00' },
+    ],
   },
   {
     id: 'd3',
@@ -27,6 +45,14 @@ export const DOCTORS: Doctor[] = [
     experience: '5+ years experience',
     queueLength: 12,
     estimatedWaitTime: '60 mins',
+    crowdLevel: 'very-high',
+    isPresent: false,
+    shifts: [
+      { dayOfWeek: 'Monday', startTime: '08:00', endTime: '16:00' },
+      { dayOfWeek: 'Wednesday', startTime: '08:00', endTime: '16:00' },
+      { dayOfWeek: 'Friday', startTime: '08:00', endTime: '16:00' },
+      { dayOfWeek: 'Saturday', startTime: '10:00', endTime: '16:00' },
+    ],
   },
   {
     id: 'd4',
@@ -36,16 +62,29 @@ export const DOCTORS: Doctor[] = [
     experience: '15+ years experience',
     queueLength: 5,
     estimatedWaitTime: '25 mins',
+    crowdLevel: 'moderate',
+    isPresent: true,
+    shifts: [
+      { dayOfWeek: 'Monday', startTime: '09:00', endTime: '17:00' },
+      { dayOfWeek: 'Tuesday', startTime: '09:00', endTime: '17:00' },
+      { dayOfWeek: 'Wednesday', startTime: '09:00', endTime: '17:00' },
+      { dayOfWeek: 'Thursday', startTime: '09:00', endTime: '17:00' },
+      { dayOfWeek: 'Friday', startTime: '09:00', endTime: '17:00' },
+      { dayOfWeek: 'Saturday', startTime: '09:00', endTime: '13:00' },
+    ],
   },
 ];
 
 export const CURRENT_PATIENT: Patient = {
   id: 'p-105',
   token: 'TKN-1234',
+  tokenNumber: 1234,
   name: 'John Doe',
   position: 5,
   estimatedWait: 25,
   status: 'waiting',
+  scheduledTime: '10:30', // Current time is around 10:15-10:25, so appointment in 5-15 min
+  scheduledDate: new Date().toISOString().split('T')[0], // Today's date
 };
 
 export const NEXT_PATIENT_STAFF_VIEW = {

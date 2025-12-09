@@ -18,7 +18,7 @@ export const RoleSelection: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl w-full">
         <Card 
           className="group hover:ring-4 ring-blue-100 transition-all transform hover:-translate-y-1"
-          onClick={() => navigate('/patient/doctors')}
+          onClick={() => navigate('/patient/login')}
         >
           <div className="p-10 flex flex-col items-center text-center">
             <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mb-6 group-hover:bg-blue-600 transition-colors">

@@ -30,16 +30,8 @@
         background-color: #f8fafc;
       }
     </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
-    "react/": "https://aistudiocdn.com/react@^19.2.1/",
-    "react": "https://aistudiocdn.com/react@^19.2.1",
-    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.10.1"
-  }
-}
-</script>
+    <!-- Vite will load the client entry module; remove importmap so local packages are used -->
+    <script type="module" src="/index.tsx"></script>
 </head>
   <body>
     <div id="root"></div>

@@ -2,9 +2,12 @@ import React from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 // Pages
+import { LandingPage } from './pages/LandingPage';
 import { RoleSelection } from './pages/RoleSelection';
+import { PatientLogin } from './pages/patient/PatientLogin';
 import { DoctorList } from './pages/patient/DoctorList';
 import { TokenScreen } from './pages/patient/TokenScreen';
+import { AppointmentConfirmation } from './pages/patient/AppointmentConfirmation';
 import { QueueTracking } from './pages/patient/QueueTracking';
 import { StaffLogin } from './pages/staff/StaffLogin';
 import { StaffDashboard } from './pages/staff/StaffDashboard';
@@ -14,12 +17,17 @@ const App: React.FC = () => {
   return (
     <HashRouter>
       <Routes>
-        {/* Startup / Role Selection */}
-        <Route path="/" element={<RoleSelection />} />
+        {/* Landing Page */}
+        <Route path="/" element={<LandingPage />} />
+
+        {/* Role Selection */}
+        <Route path="/role-selection" element={<RoleSelection />} />
 
         {/* Patient Flow */}
+        <Route path="/patient/login" element={<PatientLogin />} />
         <Route path="/patient/doctors" element={<DoctorList />} />
         <Route path="/patient/token" element={<TokenScreen />} />
+        <Route path="/patient/appointment-confirmation" element={<AppointmentConfirmation />} />
         <Route path="/patient/tracking" element={<QueueTracking />} />
 
         {/* Staff Flow */}
